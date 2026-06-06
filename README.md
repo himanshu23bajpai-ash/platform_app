@@ -1,70 +1,274 @@
 # Platform Management Application
 
-A small internal developer platform that lets you:
+An internal developer platform with project onboarding, AWS infrastructure
+visibility, AI/ML operations dashboards, role-based access control, and
+project-level secret + cost management.
 
-1. **Onboard projects** through a 4-step guided wizard.
-2. **Track the status** of each onboarding step in real time.
-3. **View the AWS infrastructure** (compute, databases, S3) for each onboarded project.
+## Features
+
+- **Project onboarding** — 4-step guided wizard (repo → AWS account/VPC → CI/CD
+  → compute), each step runs as a background task with live status polling and
+  per-step retry.
+- **Per-project dashboard** with 7 tabs:
+  - **AWS** — EC2 / ECS / EKS / Lambda compute, RDS / DynamoDB, S3 buckets
+  - **AI** — deployed models with accuracy bars, training jobs
+  - **Application Activity** — request volume & error charts, deployments,
+    active errors
+  - **Onboarding** — step status + retry
+  - **Secrets** — AWS Secrets Manager CRUD (real or in-memory mock)
+  - **Cost** — KPIs, per-service breakdown, 6-month spend chart
+  - **Team** — project assignment management
+- **RBAC** with three roles: ADMIN, PROJECT_MANAGER, PROJECT_VIEWER
+- **User management** — admin-only CRUD with self-demotion guards
+- **Soft delete** with restore
+- **Cost matrix** across projects (admin: all; manager: assigned)
+- **Azure AD OAuth 2.0** login with a dev escape hatch (`AUTH_DISABLED=true`)
+- **AWS integration**: real boto3 with deterministic mock fallback
 
 ## Stack
 
-- **Backend** — Python 3.11 + FastAPI + SQLAlchemy (SQLite)
-- **Frontend** — React 18 + Vite + TypeScript + TanStack Query
-- **Auth** — Azure AD OAuth 2.0 (with a `AUTH_DISABLED=true` dev escape hatch)
-- **AWS** — boto3 in `real` mode, deterministic mock provider otherwise (default: `auto`)
+| Layer | Choice |
+|---|---|
+| Backend | Python 3.11 + FastAPI + SQLAlchemy 2 + SQLite |
+| Frontend | React 18 + Vite + TypeScript + Material UI 5 + Highcharts |
+| Data | TanStack Query + axios |
+| Auth | Azure AD OAuth (MSAL) |
+| AWS | boto3 (auto / real / mock modes) |
 
-## Local development
+## Prerequisites
 
-### Backend
+- Python ≥ 3.11
+- Node.js ≥ 20
+- (optional) AWS credentials if you want `AWS_MODE=real`
+- (optional) Azure AD app registration if you want real login
+  (otherwise the app runs with `AUTH_DISABLED=true`)
+
+## Quick start
+
+The app runs comfortably with **two terminals** — one for the API, one for the
+UI. With `AUTH_DISABLED=true` and `AWS_MODE=mock` (the defaults), no external
+credentials are needed.
+
+### 1. Backend
 
 ```bash
 cd backend
-python -m venv .venv && source .venv/bin/activate
+python -m venv .venv
+source .venv/bin/activate            # Windows: .venv\Scripts\activate
 pip install -e ".[dev]"
-cp .env.example .env             # adjust values as needed
+cp .env.example .env                 # leave defaults for local dev
 uvicorn app.main:app --reload --port 8000
 ```
 
-The database (`platform.db`) is created automatically on first run.
+The SQLite database (`backend/platform.db`) is created automatically on first
+boot. The dev user (`dev@local`) is auto-bootstrapped as an admin.
 
-### Frontend
+### 2. Frontend
 
 ```bash
 cd frontend
 npm install
-cp .env.example .env
-npm run dev                       # http://localhost:5173
+cp .env.example .env                 # default VITE_API_BASE=/api is fine
+npm run dev                          # http://localhost:5173
 ```
 
-The Vite dev server proxies `/api/*` to `http://localhost:8000`.
+Vite proxies `/api/*` to `http://localhost:8000`.
 
-### Tests
+Open **http://localhost:5173** in your browser. You're signed in as the dev
+admin user — you'll see the project card grid, empty at first.
+
+## Trying it out
+
+1. Click **+ Onboard project**, fill in a name (e.g. `checkout-svc`),
+   description, and pick a compute type. Hit Onboard.
+2. You'll land on the project dashboard. Click the **Onboarding** tab and
+   watch the 4 steps tick over to Success in ~8 s.
+3. The **AWS** tab will show mock EC2 / ECS / S3 / RDS / DynamoDB resources
+   scoped to the project.
+4. The **AI** and **Application Activity** tabs show deterministic mock
+   metrics seeded from the project id (so each project gets stable,
+   distinct-looking data).
+5. The **Secrets** tab lets you create / read / update / delete secrets that
+   would live under `platform/<project-name>/<key>` in AWS Secrets Manager.
+6. The **Cost** tab shows mocked Cost Explorer data with a 6-month
+   Highcharts column chart.
+
+### Testing role-based access
+
+The dev escape hatch lets you impersonate any role without setting up
+Azure AD. Restart the backend with different env vars:
 
 ```bash
-cd backend
-pytest
+# Admin (default)
+AUTH_DISABLED=true uvicorn app.main:app --reload --port 8000
+
+# Manager — sees only assigned projects + cost matrix for those
+AUTH_DISABLED=true \
+DEV_USER_EMAIL=manager@acme.com \
+DEV_USER_ROLE=PROJECT_MANAGER \
+uvicorn app.main:app --reload --port 8000
+
+# Viewer — assigned project only, no cost view
+AUTH_DISABLED=true \
+DEV_USER_EMAIL=viewer@acme.com \
+DEV_USER_ROLE=PROJECT_VIEWER \
+uvicorn app.main:app --reload --port 8000
 ```
+
+While running as admin, create the manager/viewer users on the **Users**
+page, then go to a project's **Team** tab and assign them.
 
 ## Environment variables
 
-See `backend/.env.example` for the full list. Key ones:
+Backend `.env` — see `backend/.env.example`. Highlights:
 
-| Var | Purpose |
-|---|---|
-| `AUTH_DISABLED` | `true` skips Azure AD entirely (default for dev). |
-| `AZURE_TENANT_ID` / `AZURE_CLIENT_ID` / `AZURE_CLIENT_SECRET` | Azure AD app registration. |
-| `AWS_MODE` | `auto` (default), `real`, or `mock`. |
-| `SIMULATE_FAIL_STEP` | Name of a step to force-fail for testing the retry flow. |
+| Var | Default | Purpose |
+|---|---|---|
+| `DATABASE_URL` | `sqlite:///./platform.db` | SQLAlchemy URL |
+| `FRONTEND_ORIGIN` | `http://localhost:5173` | CORS allowlist |
+| `SESSION_SECRET` | `dev-secret-change-me` | Cookie signing key |
+| `AUTH_DISABLED` | `true` | Skip Azure AD; use the dev user instead |
+| `ADMIN_EMAILS` | `dev@local` | Comma-separated emails auto-promoted to ADMIN on first login |
+| `DEV_USER_EMAIL` | `dev@local` | Identity returned when AUTH_DISABLED |
+| `DEV_USER_NAME` | `Local Dev` | Display name |
+| `DEV_USER_ROLE` | `ADMIN` | Role of the dev user (ADMIN, PROJECT_MANAGER, PROJECT_VIEWER) |
+| `AZURE_TENANT_ID` / `AZURE_CLIENT_ID` / `AZURE_CLIENT_SECRET` | (empty) | Azure AD app registration |
+| `AZURE_REDIRECT_URI` | `http://localhost:8000/auth/callback` | OAuth redirect |
+| `AZURE_POST_LOGIN_REDIRECT` | `http://localhost:5173/projects` | Where to send the user after login |
+| `AWS_MODE` | `auto` | `auto` / `real` / `mock`. `auto` uses boto3 if creds are present, else mock |
+| `AWS_REGION` | `us-east-1` | Default region when project has none |
+| `SIMULATE_FAIL_STEP` | (empty) | Force an onboarding step to fail (e.g. `CICD_PIPELINE`) for testing the retry UX |
 
-## Onboarding flow
+Frontend `.env` — see `frontend/.env.example`:
 
-Each onboarding step runs as a FastAPI BackgroundTask and currently *simulates*
-provisioning (sleeps + updates status). The `services/onboarding.py` module is
-the integration point for real provisioning logic later (Terraform / CDK calls
-behind the same step interface).
+| Var | Default | Purpose |
+|---|---|---|
+| `VITE_API_BASE` | `/api` | Base URL for API calls (proxied by Vite in dev) |
 
-## AWS infra dashboard
+## Going to real AWS / real Azure AD
 
-Real resources are matched to a project via the tag `Project=<project_name>`.
-With no AWS credentials present the mock provider returns deterministic fake
-data so the UI can be exercised end-to-end.
+### Real AWS
+
+Export AWS credentials and set `AWS_MODE=real` (or leave `auto` — `auto`
+detects credentials and switches). Real resources are matched per project
+via the tag `Project=<project_name>`. Secrets live under
+`platform/<project_name>/<key>` in AWS Secrets Manager. Cost data is read
+from Cost Explorer (must be enabled in your account).
+
+### Real Azure AD
+
+1. Register an app in Azure AD with redirect URI
+   `http://localhost:8000/auth/callback`
+2. Generate a client secret
+3. Set `AUTH_DISABLED=false` and the `AZURE_TENANT_ID`,
+   `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET` env vars
+4. Add your email to `ADMIN_EMAILS` so your first login auto-promotes
+   you to admin
+5. Restart the backend
+
+## Tests
+
+```bash
+cd backend
+source .venv/bin/activate
+pytest                               # 14 tests covering RBAC, onboarding,
+                                     # secrets, cost, AI/activity
+```
+
+The frontend production build doubles as a typecheck:
+
+```bash
+cd frontend
+npm run build                        # tsc -b && vite build
+```
+
+## Docker Compose (optional)
+
+A `docker-compose.yml` is provided to spin both services up together:
+
+```bash
+docker compose up --build
+# backend: http://localhost:8000
+# frontend: http://localhost:5173
+```
+
+## Customizing colors / theme
+
+All colors live in **`frontend/src/colors.ts`** — a single file with the
+purple scale, neutral scale, semantic colors, surface tokens, chart series,
+and status-badge maps. The MUI theme (`theme.ts`), Highcharts global setup
+(`charts/setup.ts`), and every inline style derive from it. To change the
+brand color, edit the `purple` scale; everything else picks it up.
+
+## Repository structure
+
+```
+backend/
+├── app/
+│   ├── main.py                  # FastAPI entry
+│   ├── config.py                # Pydantic Settings
+│   ├── db.py                    # SQLAlchemy engine + session
+│   ├── models/                  # User, Project, OnboardingStep, ProjectAssignment
+│   ├── schemas/                 # Pydantic request/response models
+│   ├── auth/                    # Azure AD + RBAC dependencies
+│   ├── services/
+│   │   ├── onboarding.py        # 4-step state machine
+│   │   ├── insights.py          # AI + Activity mock data
+│   │   └── aws/                 # boto3 + mock providers (resources, secrets, cost)
+│   └── routers/                 # auth, users, projects, aws, secrets, cost, insights
+├── tests/
+├── pyproject.toml
+└── .env.example
+
+frontend/
+├── src/
+│   ├── colors.ts                # ✨ Single source of truth for all colors
+│   ├── theme.ts                 # MUI theme (consumes colors.ts)
+│   ├── charts/setup.ts          # Highcharts global theme (consumes colors.ts)
+│   ├── api/                     # axios client + TanStack Query hooks
+│   ├── components/
+│   │   ├── Layout.tsx           # AppBar shell
+│   │   ├── KpiCard.tsx
+│   │   └── tabs/                # AwsTab, AiTab, ActivityTab, OnboardingTab,
+│   │                            # SecretsTab, TeamTab, CostTab
+│   └── pages/                   # Projects, OnboardWizard, ProjectDashboard,
+│                                # Users, CostMatrix, Login
+├── package.json
+└── .env.example
+
+docker-compose.yml
+README.md
+```
+
+## API quick reference
+
+All non-auth endpoints require authentication (cookie session or
+`AUTH_DISABLED=true`).
+
+| Method | Path | Role |
+|---|---|---|
+| `GET` | `/health` | — |
+| `GET` | `/auth/login` | — |
+| `GET` | `/auth/callback` | — |
+| `GET` | `/auth/me` | any |
+| `POST` | `/auth/logout` | any |
+| `GET` | `/users` · `POST` `/users` · `PATCH` `/users/{id}` · `DELETE` `/users/{id}` | ADMIN |
+| `POST` | `/projects` | ADMIN |
+| `GET` | `/projects` (filtered by assignment) | any |
+| `GET` | `/projects/{id}` · `PATCH` · `DELETE` (soft) · `POST /restore` | ADMIN for write, assigned/admin for read |
+| `GET` | `/projects/{id}/onboarding` | assigned/admin |
+| `POST` | `/projects/{id}/onboarding/{step}/retry` | ADMIN |
+| `GET` `POST` `DELETE` | `/projects/{id}/assignments[/{user_id}]` | ADMIN |
+| `GET` | `/projects/{id}/aws/{compute,databases,s3}` | assigned/admin |
+| `GET` `PUT` `DELETE` | `/projects/{id}/secrets[/{key}]` | assigned/admin |
+| `GET` | `/projects/{id}/ai` · `/activity` | assigned/admin |
+| `GET` | `/projects/{id}/cost` | assigned manager / admin |
+| `GET` | `/cost/matrix` | manager (assigned) / admin (all) |
+| `GET` | `/cost/total` | ADMIN |
+
+Full schema is available at **http://localhost:8000/docs** (FastAPI auto-docs)
+once the backend is running.
+
+## License
+
+Internal / unspecified — adapt as needed.
