@@ -176,7 +176,7 @@ const inputStyle: React.CSSProperties = {
 
 const btnPrimary: React.CSSProperties = {
   padding: "6px 16px",
-  background: "#1d4ed8",
+  background: "#5b21b6",
   color: "white",
   border: 0,
   borderRadius: 6,

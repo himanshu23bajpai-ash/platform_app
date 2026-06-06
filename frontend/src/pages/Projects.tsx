@@ -119,8 +119,8 @@ export function Projects() {
                     <Avatar
                       variant="rounded"
                       sx={{
-                        bgcolor: "#eef2ff",
-                        color: "secondary.main",
+                        bgcolor: "#ede9fe",
+                        color: "primary.main",
                         width: 40,
                         height: 40,
                       }}

@@ -100,7 +100,7 @@ export function ActivityTab({ projectId }: { projectId: string }) {
                 <Line
                   type="monotone"
                   dataKey="requests"
-                  stroke="#ef4444"
+                  stroke="#5b21b6"
                   strokeWidth={2}
                   dot={{ r: 3 }}
                   activeDot={{ r: 5 }}
@@ -108,7 +108,7 @@ export function ActivityTab({ projectId }: { projectId: string }) {
                 <Line
                   type="monotone"
                   dataKey="errors"
-                  stroke="#f59e0b"
+                  stroke="#c084fc"
                   strokeWidth={2}
                   dot={{ r: 3 }}
                   activeDot={{ r: 5 }}

@@ -10,7 +10,7 @@ export function Login() {
           display: "inline-block",
           marginTop: 16,
           padding: "10px 16px",
-          background: "#1d4ed8",
+          background: "#5b21b6",
           color: "white",
           borderRadius: 6,
           textDecoration: "none",

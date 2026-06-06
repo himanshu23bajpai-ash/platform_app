@@ -127,7 +127,7 @@ export function SecretsTab({ projectId }: { projectId: string }) {
                     {revealed[s.name] !== undefined ? (
                       <Box
                         component="code"
-                        sx={{ bgcolor: "#fef9c3", px: 1, py: 0.25, borderRadius: 1 }}
+                        sx={{ bgcolor: "#ede9fe", color: "primary.dark", px: 1, py: 0.25, borderRadius: 1 }}
                       >
                         {revealed[s.name]}
                       </Box>

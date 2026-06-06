@@ -103,7 +103,7 @@ export function CostTab({ projectId }: { projectId: string }) {
                 <XAxis dataKey="month" fontSize={12} />
                 <YAxis fontSize={12} />
                 <Tooltip formatter={(v: number) => fmt(v)} />
-                <Bar dataKey="amount_usd" fill="#3b82f6" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="amount_usd" fill="#7c3aed" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </Box>

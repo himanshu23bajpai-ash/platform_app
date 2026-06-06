@@ -51,7 +51,7 @@ export function OnboardWizard() {
               flex: 1,
               padding: "8px 12px",
               borderRadius: 6,
-              background: i === step ? "#1d4ed8" : i < step ? "#dcfce7" : "#e5e7eb",
+              background: i === step ? "#5b21b6" : i < step ? "#dcfce7" : "#e5e7eb",
               color: i === step ? "white" : i < step ? "#15803d" : "#475569",
               fontSize: 13,
               fontWeight: 600,
@@ -156,7 +156,7 @@ const inputStyle: React.CSSProperties = {
 
 const btnPrimary: React.CSSProperties = {
   padding: "8px 16px",
-  background: "#1d4ed8",
+  background: "#5b21b6",
   color: "white",
   border: 0,
   borderRadius: 6,
