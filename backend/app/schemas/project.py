@@ -4,6 +4,9 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 
+Lifecycle = Literal["ACTIVE", "IN_DEVELOPMENT", "DEPRECATED"]
+
+
 class ProjectCreate(BaseModel):
     name: str = Field(min_length=1, max_length=128)
     description: str = ""
@@ -17,6 +20,7 @@ class ProjectCreate(BaseModel):
     language: str = ""
 
     compute_type: Literal["ecs", "eks", "lambda"] = "ecs"
+    lifecycle: Lifecycle = "ACTIVE"
 
 
 class ProjectUpdate(BaseModel):
@@ -28,6 +32,7 @@ class ProjectUpdate(BaseModel):
     repo_branch: str | None = None
     language: str | None = None
     compute_type: Literal["ecs", "eks", "lambda"] | None = None
+    lifecycle: Lifecycle | None = None
 
 
 class ProjectOut(BaseModel):
@@ -43,6 +48,7 @@ class ProjectOut(BaseModel):
     repo_branch: str
     language: str
     compute_type: str
+    lifecycle: str
     created_at: datetime
     updated_at: datetime
     deleted_at: datetime | None = None

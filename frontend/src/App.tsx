@@ -4,11 +4,7 @@ import { useMe } from "@/api/hooks";
 import { Login } from "@/pages/Login";
 import { Projects } from "@/pages/Projects";
 import { OnboardWizard } from "@/pages/OnboardWizard";
-import { ProjectStatus } from "@/pages/ProjectStatus";
-import { ProjectInfra } from "@/pages/ProjectInfra";
-import { ProjectSecrets } from "@/pages/ProjectSecrets";
-import { ProjectTeam } from "@/pages/ProjectTeam";
-import { ProjectCost } from "@/pages/ProjectCost";
+import { ProjectDashboard } from "@/pages/ProjectDashboard";
 import { Users } from "@/pages/Users";
 import { CostMatrix } from "@/pages/CostMatrix";
 import type { Role } from "@/types";
@@ -47,25 +43,12 @@ export function App() {
             </RequireRole>
           }
         />
-        <Route path="/projects/:id" element={<ProjectStatus />} />
-        <Route path="/projects/:id/infra" element={<ProjectInfra />} />
-        <Route path="/projects/:id/secrets" element={<ProjectSecrets />} />
-        <Route
-          path="/projects/:id/team"
-          element={
-            <RequireRole roles={["ADMIN"]}>
-              <ProjectTeam />
-            </RequireRole>
-          }
-        />
-        <Route
-          path="/projects/:id/cost"
-          element={
-            <RequireRole roles={["ADMIN", "PROJECT_MANAGER"]}>
-              <ProjectCost />
-            </RequireRole>
-          }
-        />
+        <Route path="/projects/:id" element={<ProjectDashboard />} />
+        {/* Legacy deep links → redirect into the tabbed dashboard */}
+        <Route path="/projects/:id/infra" element={<RedirectToTab tab="aws" />} />
+        <Route path="/projects/:id/secrets" element={<RedirectToTab tab="secrets" />} />
+        <Route path="/projects/:id/team" element={<RedirectToTab tab="team" />} />
+        <Route path="/projects/:id/cost" element={<RedirectToTab tab="cost" />} />
         <Route
           path="/cost"
           element={
@@ -85,4 +68,10 @@ export function App() {
       </Route>
     </Routes>
   );
+}
+
+function RedirectToTab({ tab }: { tab: string }) {
+  const { pathname } = window.location;
+  const id = pathname.split("/")[2];
+  return <Navigate to={`/projects/${id}?tab=${tab}`} replace />;
 }

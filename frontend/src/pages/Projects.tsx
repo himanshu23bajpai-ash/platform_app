@@ -1,3 +1,22 @@
+import {
+  Avatar,
+  Box,
+  Button,
+  Card,
+  CardActions,
+  CardContent,
+  Chip,
+  FormControlLabel,
+  Grid,
+  IconButton,
+  Switch,
+  Tooltip,
+  Typography,
+} from "@mui/material";
+import CloudOutlinedIcon from "@mui/icons-material/CloudOutlined";
+import AddIcon from "@mui/icons-material/Add";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import RestoreIcon from "@mui/icons-material/Restore";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -6,7 +25,22 @@ import {
   useProjects,
   useRestoreProject,
 } from "@/api/hooks";
-import { StatusBadge } from "@/components/StatusBadge";
+import type { Lifecycle } from "@/types";
+
+const LIFECYCLE_LABEL: Record<Lifecycle, string> = {
+  ACTIVE: "Active",
+  IN_DEVELOPMENT: "In Development",
+  DEPRECATED: "Deprecated",
+};
+
+const LIFECYCLE_COLOR: Record<
+  Lifecycle,
+  "success" | "warning" | "default"
+> = {
+  ACTIVE: "success",
+  IN_DEVELOPMENT: "warning",
+  DEPRECATED: "default",
+};
 
 export function Projects() {
   const { data: me } = useMe();
@@ -16,165 +50,152 @@ export function Projects() {
   const restore = useRestoreProject();
   const isAdmin = me?.role === "ADMIN";
 
-  if (isLoading) return <p>Loading...</p>;
-  if (error) return <p style={{ color: "#b91c1c" }}>Failed to load projects.</p>;
-
   return (
-    <div>
-      <div style={{ display: "flex", alignItems: "center", marginBottom: 16, gap: 12 }}>
-        <h2 style={{ margin: 0 }}>Projects</h2>
-        {isAdmin && (
-          <label style={{ marginLeft: 16, fontSize: 13, color: "#475569" }}>
-            <input
-              type="checkbox"
-              checked={includeDeleted}
-              onChange={(e) => setIncludeDeleted(e.target.checked)}
-              style={{ marginRight: 4 }}
+    <Box>
+      <Box sx={{ display: "flex", alignItems: "flex-start", mb: 3 }}>
+        <Box>
+          <Typography variant="h4" sx={{ fontWeight: 600 }}>
+            Your Projects
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Manage AWS infrastructure, AI models, and application activities
+          </Typography>
+        </Box>
+        <Box sx={{ ml: "auto", display: "flex", alignItems: "center", gap: 2 }}>
+          {isAdmin && (
+            <FormControlLabel
+              control={
+                <Switch
+                  size="small"
+                  checked={includeDeleted}
+                  onChange={(e) => setIncludeDeleted(e.target.checked)}
+                />
+              }
+              label={<Typography variant="body2">Show deleted</Typography>}
             />
-            Show deleted
-          </label>
-        )}
-        {isAdmin && (
-          <Link
-            to="/onboard"
-            style={{
-              marginLeft: "auto",
-              padding: "8px 12px",
-              background: "#1d4ed8",
-              color: "white",
-              borderRadius: 6,
-              textDecoration: "none",
-              fontWeight: 600,
-              fontSize: 14,
-            }}
-          >
-            + Onboard project
-          </Link>
-        )}
-      </div>
+          )}
+          {isAdmin && (
+            <Button
+              component={Link}
+              to="/onboard"
+              variant="contained"
+              startIcon={<AddIcon />}
+            >
+              Onboard project
+            </Button>
+          )}
+        </Box>
+      </Box>
 
-      {!data || data.length === 0 ? (
-        <p style={{ color: "#64748b" }}>
-          No projects {isAdmin ? "yet." : "assigned to you."}{" "}
-          {isAdmin && <Link to="/onboard">Onboard one</Link>}
-        </p>
-      ) : (
-        <table style={tableStyle}>
-          <thead style={{ background: "#f1f5f9" }}>
-            <tr>
-              <Th>Name</Th>
-              <Th>Compute</Th>
-              <Th>Region</Th>
-              <Th>Progress</Th>
-              <Th>Status</Th>
-              <Th />
-            </tr>
-          </thead>
-          <tbody>
-            {data.map((p) => {
-              const deleted = !!p.deleted_at;
-              return (
-                <tr
-                  key={p.id}
-                  style={{
-                    borderTop: "1px solid #e5e7eb",
-                    opacity: deleted ? 0.55 : 1,
-                  }}
-                >
-                  <Td>
-                    <strong>{p.name}</strong>
-                    {deleted && (
-                      <span style={{ marginLeft: 8, fontSize: 11, color: "#b91c1c", fontWeight: 700 }}>
-                        DELETED
-                      </span>
-                    )}
-                  </Td>
-                  <Td>{p.compute_type.toUpperCase()}</Td>
-                  <Td>{p.aws_region}</Td>
-                  <Td>
-                    {p.steps_completed} / {p.steps_total}
-                  </Td>
-                  <Td>
-                    <StatusBadge status={p.overall_status} />
-                  </Td>
-                  <Td>
-                    {!deleted ? (
-                      <>
-                        <Link to={`/projects/${p.id}`} style={linkStyle}>Status</Link>
-                        <Link to={`/projects/${p.id}/infra`} style={linkStyle}>Infra</Link>
-                        <Link to={`/projects/${p.id}/secrets`} style={linkStyle}>Secrets</Link>
-                        {isAdmin && (
-                          <>
-                            <Link to={`/projects/${p.id}/team`} style={linkStyle}>Team</Link>
-                            <button
-                              onClick={() => {
-                                if (confirm(`Soft-delete "${p.name}"?`)) del.mutate(p.id);
-                              }}
-                              style={{ ...rowBtn, color: "#b91c1c" }}
-                            >
-                              Delete
-                            </button>
-                          </>
-                        )}
-                      </>
-                    ) : (
-                      isAdmin && (
-                        <button
-                          onClick={() => restore.mutate(p.id)}
-                          style={{ ...rowBtn, color: "#15803d" }}
-                        >
-                          Restore
-                        </button>
-                      )
-                    )}
-                  </Td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+      {isLoading && <Typography>Loading...</Typography>}
+      {error && <Typography color="error">Failed to load projects.</Typography>}
+
+      {data && data.length === 0 && (
+        <Card sx={{ p: 4, textAlign: "center" }}>
+          <Typography color="text.secondary">
+            {isAdmin
+              ? "No projects yet. Click Onboard to add one."
+              : "No projects assigned to you."}
+          </Typography>
+        </Card>
       )}
-    </div>
+
+      <Grid container spacing={2}>
+        {(data ?? []).map((p) => {
+          const deleted = !!p.deleted_at;
+          const lifecycle = (p.lifecycle ?? "ACTIVE") as Lifecycle;
+          return (
+            <Grid key={p.id} item xs={12} sm={6} md={4}>
+              <Card
+                sx={{
+                  height: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                  opacity: deleted ? 0.6 : 1,
+                }}
+              >
+                <CardContent sx={{ flexGrow: 1 }}>
+                  <Box sx={{ display: "flex", alignItems: "flex-start", mb: 2 }}>
+                    <Avatar
+                      variant="rounded"
+                      sx={{
+                        bgcolor: "#eef2ff",
+                        color: "secondary.main",
+                        width: 40,
+                        height: 40,
+                      }}
+                    >
+                      <CloudOutlinedIcon />
+                    </Avatar>
+                    <Box sx={{ ml: "auto", display: "flex", gap: 1 }}>
+                      {deleted ? (
+                        <Chip label="Deleted" size="small" color="error" />
+                      ) : (
+                        <Chip
+                          label={LIFECYCLE_LABEL[lifecycle]}
+                          size="small"
+                          color={LIFECYCLE_COLOR[lifecycle]}
+                        />
+                      )}
+                    </Box>
+                  </Box>
+                  <Typography variant="h6" sx={{ mb: 0.5 }}>
+                    {p.name}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                    {p.description || "(no description)"}
+                  </Typography>
+                  <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+                    <Chip label={p.compute_type.toUpperCase()} size="small" variant="outlined" />
+                    <Chip label={p.aws_region} size="small" variant="outlined" />
+                    <Chip
+                      label={`${p.steps_completed}/${p.steps_total} steps`}
+                      size="small"
+                      variant="outlined"
+                    />
+                  </Box>
+                </CardContent>
+                <CardActions sx={{ px: 2, pb: 2 }}>
+                  {!deleted ? (
+                    <Button
+                      component={Link}
+                      to={`/projects/${p.id}`}
+                      fullWidth
+                      variant="contained"
+                    >
+                      View Details
+                    </Button>
+                  ) : (
+                    isAdmin && (
+                      <Button
+                        fullWidth
+                        color="success"
+                        variant="outlined"
+                        startIcon={<RestoreIcon />}
+                        onClick={() => restore.mutate(p.id)}
+                      >
+                        Restore
+                      </Button>
+                    )
+                  )}
+                  {!deleted && isAdmin && (
+                    <Tooltip title="Soft-delete project">
+                      <IconButton
+                        color="error"
+                        onClick={() => {
+                          if (confirm(`Soft-delete "${p.name}"?`)) del.mutate(p.id);
+                        }}
+                      >
+                        <DeleteOutlineIcon />
+                      </IconButton>
+                    </Tooltip>
+                  )}
+                </CardActions>
+              </Card>
+            </Grid>
+          );
+        })}
+      </Grid>
+    </Box>
   );
 }
-
-const tableStyle: React.CSSProperties = {
-  width: "100%",
-  borderCollapse: "collapse",
-  background: "white",
-  borderRadius: 8,
-  overflow: "hidden",
-  boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
-};
-
-const linkStyle: React.CSSProperties = {
-  marginRight: 12,
-  fontSize: 13,
-};
-
-const rowBtn: React.CSSProperties = {
-  background: "transparent",
-  border: 0,
-  cursor: "pointer",
-  fontSize: 13,
-  fontWeight: 600,
-  padding: 0,
-};
-
-const Th = ({ children }: { children?: React.ReactNode }) => (
-  <th
-    style={{
-      textAlign: "left",
-      padding: "10px 12px",
-      fontSize: 12,
-      color: "#475569",
-      textTransform: "uppercase",
-      letterSpacing: 0.5,
-    }}
-  >
-    {children}
-  </th>
-);
-const Td = ({ children }: { children: React.ReactNode }) => (
-  <td style={{ padding: "10px 12px", fontSize: 14 }}>{children}</td>
-);

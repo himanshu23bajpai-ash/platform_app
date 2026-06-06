@@ -17,6 +17,7 @@ export interface Project {
   repo_branch: string;
   language: string;
   compute_type: "ecs" | "eks" | "lambda";
+  lifecycle: Lifecycle;
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
@@ -117,4 +118,71 @@ export interface CostMatrixRow {
   current_month_usd: number;
   last_month_usd: number;
   trend_pct: number;
+}
+
+export type Lifecycle = "ACTIVE" | "IN_DEVELOPMENT" | "DEPRECATED";
+
+export interface AiMetrics {
+  active_models: number;
+  predictions_today: number;
+  avg_latency_ms: number;
+  error_rate_pct: number;
+}
+
+export interface AiModel {
+  id: string;
+  name: string;
+  version: string;
+  last_trained: string;
+  accuracy_pct: number;
+  status: "deployed" | "training" | "retired";
+}
+
+export interface TrainingJob {
+  id: string;
+  name: string;
+  status: "completed" | "running" | "failed" | "queued";
+  duration?: string | null;
+  progress_pct?: number | null;
+}
+
+export interface AiOverview {
+  metrics: AiMetrics;
+  models: AiModel[];
+  jobs: TrainingJob[];
+}
+
+export interface ActivityMetrics {
+  active_users: number;
+  deployments_7d: number;
+  active_errors: number;
+  commits_30d: number;
+}
+
+export interface RequestPoint {
+  hour: string;
+  requests: number;
+  errors: number;
+}
+
+export interface Deployment {
+  version: string;
+  environment: string;
+  status: "success" | "failed" | "running";
+  when: string;
+}
+
+export interface ActiveError {
+  code: string;
+  severity: "high" | "medium" | "low";
+  message: string;
+  occurrences: number;
+  first_seen: string;
+}
+
+export interface ActivityOverview {
+  metrics: ActivityMetrics;
+  requests_24h: RequestPoint[];
+  deployments: Deployment[];
+  errors: ActiveError[];
 }

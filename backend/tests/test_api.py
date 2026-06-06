@@ -238,6 +238,41 @@ def test_secrets_lifecycle(client):
     assert client.get(f"/projects/{pid}/secrets/db_password").status_code == 404
 
 
+def test_lifecycle_field(client):
+    p = _make_project(client, name="alpha-lifecycle", lifecycle="IN_DEVELOPMENT")
+    assert p["lifecycle"] == "IN_DEVELOPMENT"
+    r = client.patch(f"/projects/{p['id']}", json={"lifecycle": "ACTIVE"})
+    assert r.status_code == 200
+    assert r.json()["lifecycle"] == "ACTIVE"
+
+
+def test_ai_overview(client):
+    pid = _make_project(client, name="ai-svc")["id"]
+    r = client.get(f"/projects/{pid}/ai")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["metrics"]["active_models"] >= 2
+    assert body["metrics"]["predictions_today"] > 0
+    assert len(body["models"]) == body["metrics"]["active_models"]
+    assert len(body["jobs"]) == 3
+    for m in body["models"]:
+        assert m["status"] in {"deployed", "training", "retired"}
+        assert 0 <= m["accuracy_pct"] <= 100
+
+
+def test_activity_overview(client):
+    pid = _make_project(client, name="activity-svc")["id"]
+    r = client.get(f"/projects/{pid}/activity")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["metrics"]["active_users"] >= 200
+    assert len(body["requests_24h"]) == 6  # 4-hour buckets
+    assert len(body["deployments"]) == 4
+    assert len(body["errors"]) == 4
+    for err in body["errors"]:
+        assert err["severity"] in {"high", "medium", "low"}
+
+
 def test_cost_matrix_admin(client):
     pid1 = _make_project(client, name="cost-a")["id"]
     pid2 = _make_project(client, name="cost-b", compute_type="eks")["id"]

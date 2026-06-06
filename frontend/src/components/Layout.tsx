@@ -1,3 +1,13 @@
+import {
+  AppBar,
+  Avatar,
+  Box,
+  Button,
+  Chip,
+  Container,
+  Toolbar,
+  Typography,
+} from "@mui/material";
 import { Link, NavLink, Outlet } from "react-router-dom";
 import { useMe } from "@/api/hooks";
 import type { Role } from "@/types";
@@ -8,73 +18,72 @@ const ROLE_LABEL: Record<Role, string> = {
   PROJECT_VIEWER: "Viewer",
 };
 
-const ROLE_COLOR: Record<Role, { bg: string; fg: string }> = {
-  ADMIN: { bg: "#fef3c7", fg: "#92400e" },
-  PROJECT_MANAGER: { bg: "#e0e7ff", fg: "#3730a3" },
-  PROJECT_VIEWER: { bg: "#e2e8f0", fg: "#334155" },
+const ROLE_COLOR: Record<Role, "warning" | "secondary" | "default"> = {
+  ADMIN: "warning",
+  PROJECT_MANAGER: "secondary",
+  PROJECT_VIEWER: "default",
 };
 
 export function Layout() {
   const { data: user } = useMe();
-  const role = user?.role;
 
   return (
-    <div style={{ fontFamily: "system-ui, sans-serif", minHeight: "100vh", background: "#f8fafc" }}>
-      <header
-        style={{
-          display: "flex",
-          alignItems: "center",
-          padding: "12px 24px",
-          background: "white",
-          borderBottom: "1px solid #e5e7eb",
-        }}
-      >
-        <Link to="/" style={{ fontWeight: 700, fontSize: 18, color: "#0f172a", textDecoration: "none" }}>
-          Platform App
-        </Link>
-        <nav style={{ marginLeft: 24, display: "flex", gap: 16 }}>
-          <NavLink to="/projects" style={navStyle}>Projects</NavLink>
-          {role === "ADMIN" && <NavLink to="/onboard" style={navStyle}>Onboard</NavLink>}
-          {(role === "ADMIN" || role === "PROJECT_MANAGER") && (
-            <NavLink to="/cost" style={navStyle}>Cost</NavLink>
-          )}
-          {role === "ADMIN" && <NavLink to="/users" style={navStyle}>Users</NavLink>}
-        </nav>
-        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 10, fontSize: 14, color: "#475569" }}>
+    <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
+      <AppBar position="static" color="primary">
+        <Toolbar>
+          <Typography
+            component={Link}
+            to="/"
+            variant="h6"
+            sx={{ color: "inherit", textDecoration: "none", flexShrink: 0, mr: 4 }}
+          >
+            Platform Manager
+          </Typography>
+          <Box sx={{ display: "flex", gap: 1, flexGrow: 1 }}>
+            <NavButton to="/projects" label="Projects" />
+            {user?.role === "ADMIN" && <NavButton to="/onboard" label="Onboard" />}
+            {(user?.role === "ADMIN" || user?.role === "PROJECT_MANAGER") && (
+              <NavButton to="/cost" label="Cost" />
+            )}
+            {user?.role === "ADMIN" && <NavButton to="/users" label="Users" />}
+          </Box>
           {user ? (
-            <>
-              <span>{user.name || user.email}</span>
-              {role && (
-                <span
-                  style={{
-                    background: ROLE_COLOR[role].bg,
-                    color: ROLE_COLOR[role].fg,
-                    padding: "2px 8px",
-                    borderRadius: 12,
-                    fontSize: 11,
-                    fontWeight: 700,
-                    letterSpacing: 0.3,
-                  }}
-                >
-                  {ROLE_LABEL[role]}
-                </span>
-              )}
-            </>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Chip
+                label={ROLE_LABEL[user.role]}
+                size="small"
+                color={ROLE_COLOR[user.role]}
+                sx={{ fontWeight: 700 }}
+              />
+              <Typography variant="body2">{user.name || user.email}</Typography>
+              <Avatar sx={{ width: 32, height: 32, bgcolor: "rgba(255,255,255,0.2)" }}>
+                {(user.name || user.email || "?").charAt(0).toUpperCase()}
+              </Avatar>
+            </Box>
           ) : (
-            "Not signed in"
+            <Typography variant="body2">Not signed in</Typography>
           )}
-        </div>
-      </header>
-      <main style={{ padding: 24, maxWidth: 1100, margin: "0 auto" }}>
+        </Toolbar>
+      </AppBar>
+      <Container maxWidth="lg" sx={{ py: 3 }}>
         <Outlet />
-      </main>
-    </div>
+      </Container>
+    </Box>
   );
 }
 
-const navStyle = ({ isActive }: { isActive: boolean }): React.CSSProperties => ({
-  color: isActive ? "#1d4ed8" : "#334155",
-  fontWeight: isActive ? 700 : 500,
-  textDecoration: "none",
-  fontSize: 14,
-});
+function NavButton({ to, label }: { to: string; label: string }) {
+  return (
+    <Button
+      component={NavLink}
+      to={to}
+      sx={{
+        color: "rgba(255,255,255,0.85)",
+        fontWeight: 500,
+        "&.active": { color: "#fff", fontWeight: 700, bgcolor: "rgba(255,255,255,0.1)" },
+      }}
+    >
+      {label}
+    </Button>
+  );
+}

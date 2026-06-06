@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "./client";
 import type {
+  ActivityOverview,
+  AiOverview,
   Assignment,
   ComputeResource,
   CostMatrixRow,
@@ -267,5 +269,21 @@ export const useProjectCost = (projectId: string | undefined) =>
     queryKey: ["cost", "project", projectId],
     queryFn: async () =>
       (await api.get<ProjectCost>(`/projects/${projectId}/cost`)).data,
+    enabled: !!projectId,
+  });
+
+// --- AI / Activity ---
+export const useProjectAi = (projectId: string | undefined) =>
+  useQuery<AiOverview>({
+    queryKey: ["ai", projectId],
+    queryFn: async () => (await api.get<AiOverview>(`/projects/${projectId}/ai`)).data,
+    enabled: !!projectId,
+  });
+
+export const useProjectActivity = (projectId: string | undefined) =>
+  useQuery<ActivityOverview>({
+    queryKey: ["activity", projectId],
+    queryFn: async () =>
+      (await api.get<ActivityOverview>(`/projects/${projectId}/activity`)).data,
     enabled: !!projectId,
   });
