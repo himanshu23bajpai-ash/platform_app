@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCreateProject } from "@/api/hooks";
+import { neutral, purple, semantic, surface, text } from "@/colors";
 
 interface FormState {
   name: string;
@@ -51,8 +52,8 @@ export function OnboardWizard() {
               flex: 1,
               padding: "8px 12px",
               borderRadius: 6,
-              background: i === step ? "#5b21b6" : i < step ? "#dcfce7" : "#e5e7eb",
-              color: i === step ? "white" : i < step ? "#15803d" : "#475569",
+              background: i === step ? purple[800] : i < step ? semantic.success.light : neutral[200],
+              color: i === step ? text.onPrimary : i < step ? semantic.success.dark : text.secondary,
               fontSize: 13,
               fontWeight: 600,
             }}
@@ -95,7 +96,7 @@ export function OnboardWizard() {
         )}
 
         {step === 2 && (
-          <p style={{ color: "#475569" }}>
+          <p style={{ color: text.secondary }}>
             A default CI/CD pipeline will be created for <strong>{form.name || "your project"}</strong>.
             No further configuration is required for v1.
           </p>
@@ -130,7 +131,7 @@ export function OnboardWizard() {
           )}
         </div>
         {create.error && (
-          <p style={{ color: "#b91c1c", marginTop: 12 }}>
+          <p style={{ color: semantic.error.dark, marginTop: 12 }}>
             {(create.error as Error).message}
           </p>
         )}
@@ -141,7 +142,7 @@ export function OnboardWizard() {
 
 const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <label style={{ display: "block", marginBottom: 12 }}>
-    <div style={{ fontSize: 13, fontWeight: 600, color: "#334155", marginBottom: 4 }}>{label}</div>
+    <div style={{ fontSize: 13, fontWeight: 600, color: neutral[700], marginBottom: 4 }}>{label}</div>
     {children}
   </label>
 );
@@ -149,15 +150,15 @@ const Field = ({ label, children }: { label: string; children: React.ReactNode }
 const inputStyle: React.CSSProperties = {
   width: "100%",
   padding: "8px 10px",
-  border: "1px solid #cbd5e1",
+  border: `1px solid ${neutral[300]}`,
   borderRadius: 6,
   fontSize: 14,
 };
 
 const btnPrimary: React.CSSProperties = {
   padding: "8px 16px",
-  background: "#5b21b6",
-  color: "white",
+  background: purple[800],
+  color: text.onPrimary,
   border: 0,
   borderRadius: 6,
   fontWeight: 600,
@@ -166,8 +167,8 @@ const btnPrimary: React.CSSProperties = {
 
 const btnSecondary: React.CSSProperties = {
   padding: "8px 16px",
-  background: "#e5e7eb",
-  color: "#334155",
+  background: surface.border,
+  color: neutral[700],
   border: 0,
   borderRadius: 6,
   fontWeight: 600,

@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { CssBaseline, ThemeProvider } from "@mui/material";
 import { App } from "./App";
 import { theme } from "./theme";
+import "./charts/setup"; // Highcharts global theme
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 5000, refetchOnWindowFocus: false } },

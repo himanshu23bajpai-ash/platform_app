@@ -6,6 +6,7 @@ import {
   useUpdateUser,
   useUsers,
 } from "@/api/hooks";
+import { neutral, purple, semantic, surface, text } from "@/colors";
 import type { Role } from "@/types";
 
 const ROLES: Role[] = ["ADMIN", "PROJECT_MANAGER", "PROJECT_VIEWER"];
@@ -74,14 +75,14 @@ export function Users() {
           </button>
         </div>
         {create.error && (
-          <p style={{ color: "#b91c1c", marginTop: 8, fontSize: 13 }}>
+          <p style={{ color: semantic.error.dark, marginTop: 8, fontSize: 13 }}>
             {(create.error as Error).message}
           </p>
         )}
       </form>
 
       <table style={{ ...cardStyle, padding: 0 }}>
-        <thead style={{ background: "#f1f5f9" }}>
+        <thead style={{ background: neutral[100] }}>
           <tr>
             <Th>Email</Th>
             <Th>Name</Th>
@@ -95,7 +96,7 @@ export function Users() {
           {(users ?? []).map((u) => {
             const isSelf = me?.id === u.id;
             return (
-              <tr key={u.id} style={{ borderTop: "1px solid #e5e7eb" }}>
+              <tr key={u.id} style={{ borderTop: `1px solid ${surface.border}` }}>
                 <Td>{u.email}</Td>
                 <Td>{u.name || "—"}</Td>
                 <Td>
@@ -134,7 +135,7 @@ export function Users() {
                       style={{
                         background: "transparent",
                         border: 0,
-                        color: "#b91c1c",
+                        color: semantic.error.dark,
                         cursor: "pointer",
                         fontWeight: 600,
                         fontSize: 13,
@@ -144,7 +145,7 @@ export function Users() {
                     </button>
                   )}
                   {isSelf && (
-                    <span style={{ color: "#94a3b8", fontSize: 12 }}>(you)</span>
+                    <span style={{ color: text.disabled, fontSize: 12 }}>(you)</span>
                   )}
                 </Td>
               </tr>
@@ -157,7 +158,7 @@ export function Users() {
 }
 
 const cardStyle: React.CSSProperties = {
-  background: "white",
+  background: surface.paper,
   borderRadius: 8,
   boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
   padding: 16,
@@ -168,16 +169,16 @@ const cardStyle: React.CSSProperties = {
 
 const inputStyle: React.CSSProperties = {
   padding: "6px 10px",
-  border: "1px solid #cbd5e1",
+  border: `1px solid ${neutral[300]}`,
   borderRadius: 6,
   fontSize: 14,
-  background: "white",
+  background: surface.paper,
 };
 
 const btnPrimary: React.CSSProperties = {
   padding: "6px 16px",
-  background: "#5b21b6",
-  color: "white",
+  background: purple[800],
+  color: text.onPrimary,
   border: 0,
   borderRadius: 6,
   fontWeight: 600,
@@ -190,7 +191,7 @@ const Th = ({ children }: { children?: React.ReactNode }) => (
       textAlign: "left",
       padding: "10px 12px",
       fontSize: 12,
-      color: "#475569",
+      color: text.secondary,
       textTransform: "uppercase",
       letterSpacing: 0.5,
     }}

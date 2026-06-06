@@ -25,6 +25,7 @@ import {
   useProjects,
   useRestoreProject,
 } from "@/api/hooks";
+import { surface } from "@/colors";
 import type { Lifecycle } from "@/types";
 
 const LIFECYCLE_LABEL: Record<Lifecycle, string> = {
@@ -119,7 +120,7 @@ export function Projects() {
                     <Avatar
                       variant="rounded"
                       sx={{
-                        bgcolor: "#ede9fe",
+                        bgcolor: surface.highlight,
                         color: "primary.main",
                         width: 40,
                         height: 40,

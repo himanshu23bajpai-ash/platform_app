@@ -14,6 +14,7 @@ import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import { useProjectAi } from "@/api/hooks";
 import { KpiCard } from "@/components/KpiCard";
+import { surface } from "@/colors";
 
 const JOB_COLOR: Record<string, "success" | "info" | "default" | "error"> = {
   completed: "success",
@@ -67,7 +68,7 @@ export function AiTab({ projectId }: { projectId: string }) {
             {data.models.map((model) => (
               <Box
                 key={model.id}
-                sx={{ border: "1px solid #e5e7eb", borderRadius: 2, p: 1.5 }}
+                sx={{ border: `1px solid ${surface.border}`, borderRadius: 2, p: 1.5 }}
               >
                 <Stack direction="row" alignItems="flex-start" spacing={1}>
                   <Box sx={{ flexGrow: 1 }}>
@@ -112,7 +113,7 @@ export function AiTab({ projectId }: { projectId: string }) {
             {data.jobs.map((job) => (
               <Box
                 key={job.id}
-                sx={{ border: "1px solid #e5e7eb", borderRadius: 2, p: 1.5 }}
+                sx={{ border: `1px solid ${surface.border}`, borderRadius: 2, p: 1.5 }}
               >
                 <Stack direction="row" alignItems="center" spacing={1.5}>
                   <Typography variant="body2" sx={{ fontFamily: "monospace" }}>

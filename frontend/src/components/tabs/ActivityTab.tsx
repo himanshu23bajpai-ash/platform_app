@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import {
   Box,
   Card,
@@ -18,17 +19,11 @@ import RocketLaunchIcon from "@mui/icons-material/RocketLaunch";
 import BugReportIcon from "@mui/icons-material/BugReport";
 import CodeIcon from "@mui/icons-material/Code";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
-import {
-  CartesianGrid,
-  Line,
-  LineChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import HighchartsReact from "highcharts-react-official";
 import { useProjectActivity } from "@/api/hooks";
 import { KpiCard } from "@/components/KpiCard";
+import { Highcharts } from "@/charts/setup";
+import { chart, surface } from "@/colors";
 
 const SEV_COLOR: Record<string, "error" | "warning" | "default"> = {
   high: "error",
@@ -44,6 +39,31 @@ const STATUS_COLOR: Record<string, "success" | "error" | "info" | "default"> = {
 
 export function ActivityTab({ projectId }: { projectId: string }) {
   const { data, isLoading } = useProjectActivity(projectId);
+
+  const chartOptions = useMemo<Highcharts.Options | null>(() => {
+    if (!data) return null;
+    return {
+      chart: { type: "spline", height: 320 },
+      xAxis: { categories: data.requests_24h.map((p) => p.hour) },
+      tooltip: { shared: true },
+      legend: { enabled: true },
+      series: [
+        {
+          type: "spline",
+          name: "Requests",
+          data: data.requests_24h.map((p) => p.requests),
+          color: chart.primary,
+        },
+        {
+          type: "spline",
+          name: "Errors",
+          data: data.requests_24h.map((p) => p.errors),
+          color: chart.secondary,
+        },
+      ],
+    };
+  }, [data]);
+
   if (isLoading || !data) return <LinearProgress />;
   const m = data.metrics;
 
@@ -90,32 +110,7 @@ export function ActivityTab({ projectId }: { projectId: string }) {
           <Typography variant="h6" sx={{ mb: 2 }}>
             Request Volume &amp; Errors (24h)
           </Typography>
-          <Box sx={{ width: "100%", height: 280 }}>
-            <ResponsiveContainer>
-              <LineChart data={data.requests_24h} margin={{ top: 8, right: 24, bottom: 8, left: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis dataKey="hour" fontSize={12} />
-                <YAxis fontSize={12} />
-                <Tooltip />
-                <Line
-                  type="monotone"
-                  dataKey="requests"
-                  stroke="#5b21b6"
-                  strokeWidth={2}
-                  dot={{ r: 3 }}
-                  activeDot={{ r: 5 }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="errors"
-                  stroke="#c084fc"
-                  strokeWidth={2}
-                  dot={{ r: 3 }}
-                  activeDot={{ r: 5 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </Box>
+          {chartOptions && <HighchartsReact highcharts={Highcharts} options={chartOptions} />}
         </CardContent>
       </Card>
 
@@ -169,7 +164,7 @@ export function ActivityTab({ projectId }: { projectId: string }) {
                   <Box
                     key={err.code}
                     sx={{
-                      border: "1px solid #e5e7eb",
+                      border: `1px solid ${surface.border}`,
                       borderRadius: 2,
                       p: 1.5,
                     }}

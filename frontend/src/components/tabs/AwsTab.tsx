@@ -19,6 +19,7 @@ import {
   useS3,
 } from "@/api/hooks";
 import { KpiCard } from "@/components/KpiCard";
+import { surface } from "@/colors";
 
 const fmt = (n: number) =>
   n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 });
@@ -87,7 +88,7 @@ export function AwsTab({ projectId }: { projectId: string }) {
               <Box
                 key={r.id}
                 sx={{
-                  border: "1px solid #e5e7eb",
+                  border: `1px solid ${surface.border}`,
                   borderRadius: 2,
                   p: 1.5,
                 }}
@@ -149,7 +150,7 @@ export function AwsTab({ projectId }: { projectId: string }) {
                   <Box
                     key={b.name}
                     sx={{
-                      border: "1px solid #e5e7eb",
+                      border: `1px solid ${surface.border}`,
                       borderRadius: 2,
                       p: 1.5,
                       display: "flex",
@@ -192,7 +193,7 @@ export function AwsTab({ projectId }: { projectId: string }) {
                   <Box
                     key={d.id}
                     sx={{
-                      border: "1px solid #e5e7eb",
+                      border: `1px solid ${surface.border}`,
                       borderRadius: 2,
                       p: 1.5,
                     }}

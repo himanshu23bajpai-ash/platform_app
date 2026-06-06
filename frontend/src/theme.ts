@@ -1,14 +1,32 @@
 import { createTheme } from "@mui/material/styles";
+import { purple, semantic, surface, text } from "./colors";
 
 export const theme = createTheme({
   palette: {
     mode: "light",
-    primary: { main: "#5b21b6", light: "#7c3aed", dark: "#4c1d95" },
-    secondary: { main: "#a78bfa", light: "#c4b5fd", dark: "#7c3aed" },
-    background: { default: "#faf5ff", paper: "#ffffff" },
-    success: { main: "#16a34a" },
-    warning: { main: "#f59e0b" },
-    error: { main: "#dc2626" },
+    primary: {
+      main: purple[800],
+      light: purple[600],
+      dark: purple[900],
+      contrastText: text.onPrimary,
+    },
+    secondary: {
+      main: purple[400],
+      light: purple[300],
+      dark: purple[600],
+      contrastText: text.onPrimary,
+    },
+    background: { default: surface.appBg, paper: surface.paper },
+    success: semantic.success,
+    warning: semantic.warning,
+    error: semantic.error,
+    info: semantic.info,
+    text: {
+      primary: text.primary,
+      secondary: text.secondary,
+      disabled: text.disabled,
+    },
+    divider: surface.divider,
   },
   shape: { borderRadius: 8 },
   typography: {
@@ -20,7 +38,7 @@ export const theme = createTheme({
   components: {
     MuiCard: {
       defaultProps: { elevation: 0 },
-      styleOverrides: { root: { border: "1px solid #e5e7eb" } },
+      styleOverrides: { root: { border: `1px solid ${surface.border}` } },
     },
     MuiAppBar: { defaultProps: { elevation: 0 } },
     MuiButton: { defaultProps: { disableElevation: true } },

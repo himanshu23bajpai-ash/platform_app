@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import { useMe } from "@/api/hooks";
+import { semantic } from "@/colors";
 import { Login } from "@/pages/Login";
 import { Projects } from "@/pages/Projects";
 import { OnboardWizard } from "@/pages/OnboardWizard";
@@ -21,7 +22,7 @@ function RequireRole({
   if (!me) return <Navigate to="/login" replace />;
   if (!roles.includes(me.role))
     return (
-      <p style={{ padding: 24, color: "#b91c1c" }}>
+      <p style={{ padding: 24, color: semantic.error.dark }}>
         You don't have permission to view this page.
       </p>
     );

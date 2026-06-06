@@ -10,23 +10,37 @@ import {
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import TrendingDownIcon from "@mui/icons-material/TrendingDown";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import HighchartsReact from "highcharts-react-official";
+import { useMemo } from "react";
 import { useProjectCost } from "@/api/hooks";
 import { KpiCard } from "@/components/KpiCard";
+import { Highcharts } from "@/charts/setup";
+import { chart } from "@/colors";
 
 const fmt = (n: number) =>
   n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 });
 
 export function CostTab({ projectId }: { projectId: string }) {
   const { data, isLoading } = useProjectCost(projectId);
+
+  const chartOptions = useMemo<Highcharts.Options | null>(() => {
+    if (!data) return null;
+    return {
+      chart: { type: "column", height: 280 },
+      xAxis: { categories: data.last_6_months.map((m) => m.month) },
+      yAxis: { labels: { format: "${value}" } },
+      tooltip: { pointFormat: "<b>${point.y:,.2f}</b>" },
+      series: [
+        {
+          type: "column",
+          name: "Spend",
+          data: data.last_6_months.map((m) => m.amount_usd),
+          color: chart.accent,
+        },
+      ],
+      legend: { enabled: false },
+    };
+  }, [data]);
 
   if (isLoading || !data) return <LinearProgress />;
   const trend =
@@ -96,17 +110,7 @@ export function CostTab({ projectId }: { projectId: string }) {
           <Typography variant="h6" sx={{ mb: 2 }}>
             Last 6 months
           </Typography>
-          <Box sx={{ width: "100%", height: 240 }}>
-            <ResponsiveContainer>
-              <BarChart data={data.last_6_months} margin={{ top: 8, right: 16, bottom: 0, left: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis dataKey="month" fontSize={12} />
-                <YAxis fontSize={12} />
-                <Tooltip formatter={(v: number) => fmt(v)} />
-                <Bar dataKey="amount_usd" fill="#7c3aed" radius={[6, 6, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </Box>
+          {chartOptions && <HighchartsReact highcharts={Highcharts} options={chartOptions} />}
         </CardContent>
       </Card>
     </Box>

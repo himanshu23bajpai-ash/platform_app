@@ -25,6 +25,7 @@ import {
   useReadSecret,
   useSecrets,
 } from "@/api/hooks";
+import { surface } from "@/colors";
 
 export function SecretsTab({ projectId }: { projectId: string }) {
   const { data: project } = useProject(projectId);
@@ -127,7 +128,7 @@ export function SecretsTab({ projectId }: { projectId: string }) {
                     {revealed[s.name] !== undefined ? (
                       <Box
                         component="code"
-                        sx={{ bgcolor: "#ede9fe", color: "primary.dark", px: 1, py: 0.25, borderRadius: 1 }}
+                        sx={{ bgcolor: surface.highlight, color: "primary.dark", px: 1, py: 0.25, borderRadius: 1 }}
                       >
                         {revealed[s.name]}
                       </Box>
