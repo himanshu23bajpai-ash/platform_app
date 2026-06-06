@@ -27,6 +27,11 @@ def get_db() -> Generator[Session, None, None]:
 
 def init_db() -> None:
     # Import models so they are registered on Base.metadata
-    from app.models import onboarding_step, project  # noqa: F401
+    from app.models import (  # noqa: F401
+        onboarding_step,
+        project,
+        project_assignment,
+        user,
+    )
 
     Base.metadata.create_all(bind=engine)

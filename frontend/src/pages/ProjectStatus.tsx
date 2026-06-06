@@ -1,5 +1,5 @@
 import { Link, useParams } from "react-router-dom";
-import { useOnboarding, useProject, useRetryStep } from "@/api/hooks";
+import { useMe, useOnboarding, useProject, useRetryStep } from "@/api/hooks";
 import { StatusBadge } from "@/components/StatusBadge";
 import type { StepName } from "@/types";
 
@@ -12,23 +12,32 @@ const STEP_LABELS: Record<StepName, string> = {
 
 export function ProjectStatus() {
   const { id } = useParams<{ id: string }>();
+  const { data: me } = useMe();
   const { data: project } = useProject(id);
   const { data: steps, isLoading } = useOnboarding(id);
   const retry = useRetryStep(id ?? "");
+  const canSeeCost = me?.role === "ADMIN" || me?.role === "PROJECT_MANAGER";
 
   if (isLoading) return <p>Loading...</p>;
   if (!project || !steps) return <p>Project not found.</p>;
 
   return (
     <div>
-      <div style={{ display: "flex", alignItems: "center", marginBottom: 16 }}>
+      <div style={{ display: "flex", alignItems: "center", marginBottom: 16, gap: 16 }}>
         <h2 style={{ margin: 0 }}>{project.name}</h2>
-        <Link
-          to={`/projects/${project.id}/infra`}
-          style={{ marginLeft: "auto", color: "#1d4ed8", fontWeight: 600 }}
-        >
-          View AWS infra →
-        </Link>
+        <div style={{ marginLeft: "auto", display: "flex", gap: 16 }}>
+          <Link to={`/projects/${project.id}/secrets`} style={{ color: "#1d4ed8", fontWeight: 600 }}>
+            Secrets →
+          </Link>
+          {canSeeCost && (
+            <Link to={`/projects/${project.id}/cost`} style={{ color: "#1d4ed8", fontWeight: 600 }}>
+              Cost →
+            </Link>
+          )}
+          <Link to={`/projects/${project.id}/infra`} style={{ color: "#1d4ed8", fontWeight: 600 }}>
+            AWS infra →
+          </Link>
+        </div>
       </div>
 
       <p style={{ color: "#475569" }}>{project.description || "(no description)"}</p>

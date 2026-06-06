@@ -24,6 +24,14 @@ class Settings(BaseSettings):
     auth_disabled: bool = True
     simulate_fail_step: str = ""
 
+    # Comma-separated emails that get auto-promoted to ADMIN on first login.
+    admin_emails: str = "dev@local"
+
+    # Dev escape-hatch identity (used when AUTH_DISABLED=true).
+    dev_user_email: str = "dev@local"
+    dev_user_name: str = "Local Dev"
+    dev_user_role: str = "ADMIN"
+
 
 @lru_cache
 def get_settings() -> Settings:

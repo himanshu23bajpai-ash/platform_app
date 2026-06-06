@@ -19,6 +19,7 @@ export interface Project {
   compute_type: "ecs" | "eks" | "lambda";
   created_at: string;
   updated_at: string;
+  deleted_at: string | null;
 }
 
 export interface ProjectSummary extends Project {
@@ -62,8 +63,58 @@ export interface S3Resource {
   created_at: string | null;
 }
 
+export type Role = "ADMIN" | "PROJECT_MANAGER" | "PROJECT_VIEWER";
+
 export interface User {
+  id: string;
   email: string;
   name: string;
-  oid: string;
+  role: Role;
+  is_active: boolean;
+  azure_oid: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Assignment {
+  id: string;
+  user_id: string;
+  project_id: string;
+  created_at: string;
+  user: User;
+}
+
+export interface SecretSummary {
+  name: string;
+  arn: string;
+  description: string;
+  last_changed: string | null;
+}
+
+export interface CostBreakdownItem {
+  service: string;
+  amount_usd: number;
+}
+
+export interface CostPeriod {
+  month: string;
+  amount_usd: number;
+}
+
+export interface ProjectCost {
+  project_id: string;
+  project_name: string;
+  currency: string;
+  total_current_month_usd: number;
+  total_last_month_usd: number;
+  breakdown: CostBreakdownItem[];
+  last_6_months: CostPeriod[];
+}
+
+export interface CostMatrixRow {
+  project_id: string;
+  project_name: string;
+  current_month_usd: number;
+  last_month_usd: number;
+  trend_pct: number;
 }

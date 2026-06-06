@@ -1,8 +1,23 @@
 import { Link, NavLink, Outlet } from "react-router-dom";
 import { useMe } from "@/api/hooks";
+import type { Role } from "@/types";
+
+const ROLE_LABEL: Record<Role, string> = {
+  ADMIN: "Admin",
+  PROJECT_MANAGER: "Manager",
+  PROJECT_VIEWER: "Viewer",
+};
+
+const ROLE_COLOR: Record<Role, { bg: string; fg: string }> = {
+  ADMIN: { bg: "#fef3c7", fg: "#92400e" },
+  PROJECT_MANAGER: { bg: "#e0e7ff", fg: "#3730a3" },
+  PROJECT_VIEWER: { bg: "#e2e8f0", fg: "#334155" },
+};
 
 export function Layout() {
   const { data: user } = useMe();
+  const role = user?.role;
+
   return (
     <div style={{ fontFamily: "system-ui, sans-serif", minHeight: "100vh", background: "#f8fafc" }}>
       <header
@@ -19,10 +34,35 @@ export function Layout() {
         </Link>
         <nav style={{ marginLeft: 24, display: "flex", gap: 16 }}>
           <NavLink to="/projects" style={navStyle}>Projects</NavLink>
-          <NavLink to="/onboard" style={navStyle}>Onboard</NavLink>
+          {role === "ADMIN" && <NavLink to="/onboard" style={navStyle}>Onboard</NavLink>}
+          {(role === "ADMIN" || role === "PROJECT_MANAGER") && (
+            <NavLink to="/cost" style={navStyle}>Cost</NavLink>
+          )}
+          {role === "ADMIN" && <NavLink to="/users" style={navStyle}>Users</NavLink>}
         </nav>
-        <div style={{ marginLeft: "auto", fontSize: 14, color: "#475569" }}>
-          {user ? `${user.name || user.email}` : "Not signed in"}
+        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 10, fontSize: 14, color: "#475569" }}>
+          {user ? (
+            <>
+              <span>{user.name || user.email}</span>
+              {role && (
+                <span
+                  style={{
+                    background: ROLE_COLOR[role].bg,
+                    color: ROLE_COLOR[role].fg,
+                    padding: "2px 8px",
+                    borderRadius: 12,
+                    fontSize: 11,
+                    fontWeight: 700,
+                    letterSpacing: 0.3,
+                  }}
+                >
+                  {ROLE_LABEL[role]}
+                </span>
+              )}
+            </>
+          ) : (
+            "Not signed in"
+          )}
         </div>
       </header>
       <main style={{ padding: 24, maxWidth: 1100, margin: "0 auto" }}>

@@ -4,7 +4,7 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from app.config import get_settings
 from app.db import init_db
-from app.routers import auth, aws, projects
+from app.routers import auth, aws, cost, projects, secrets, users
 
 settings = get_settings()
 
@@ -35,5 +35,8 @@ def health() -> dict:
 
 
 app.include_router(auth.router)
+app.include_router(users.router)
 app.include_router(projects.router)
 app.include_router(aws.router)
+app.include_router(secrets.router)
+app.include_router(cost.router)

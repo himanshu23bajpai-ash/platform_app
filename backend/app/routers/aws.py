@@ -1,32 +1,34 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from app.auth.deps import current_user
+from app.auth.deps import current_user, require_project_access
 from app.db import get_db
 from app.models.project import Project
+from app.models.user import User
 from app.schemas.aws import ComputeResource, DatabaseResource, S3Resource
 from app.services.aws.factory import get_aws_provider
 
 router = APIRouter(prefix="/projects/{project_id}/aws", tags=["aws"])
 
 
-def _project(db: Session, project_id: str) -> Project:
+def _project(db: Session, project_id: str, user: User) -> Project:
     project = db.get(Project, project_id)
-    if not project:
+    if not project or project.deleted_at:
         raise HTTPException(404, "Project not found")
+    require_project_access(project_id, user, db)
     return project
 
 
 @router.get("/compute", response_model=list[ComputeResource])
-def compute(project_id: str, db: Session = Depends(get_db), _: dict = Depends(current_user)):
-    return get_aws_provider().list_compute(_project(db, project_id))
+def compute(project_id: str, db: Session = Depends(get_db), user: User = Depends(current_user)):
+    return get_aws_provider().list_compute(_project(db, project_id, user))
 
 
 @router.get("/databases", response_model=list[DatabaseResource])
-def databases(project_id: str, db: Session = Depends(get_db), _: dict = Depends(current_user)):
-    return get_aws_provider().list_databases(_project(db, project_id))
+def databases(project_id: str, db: Session = Depends(get_db), user: User = Depends(current_user)):
+    return get_aws_provider().list_databases(_project(db, project_id, user))
 
 
 @router.get("/s3", response_model=list[S3Resource])
-def s3(project_id: str, db: Session = Depends(get_db), _: dict = Depends(current_user)):
-    return get_aws_provider().list_s3(_project(db, project_id))
+def s3(project_id: str, db: Session = Depends(get_db), user: User = Depends(current_user)):
+    return get_aws_provider().list_s3(_project(db, project_id, user))

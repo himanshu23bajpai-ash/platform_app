@@ -2,10 +2,14 @@ import secrets
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
+from sqlalchemy.orm import Session
 
 from app.auth import azure_ad
-from app.auth.deps import current_user
+from app.auth.deps import _get_or_create_user, current_user
 from app.config import get_settings
+from app.db import get_db
+from app.models.user import User
+from app.schemas.user import UserOut
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -22,7 +26,12 @@ def login(request: Request):
 
 
 @router.get("/callback")
-def callback(request: Request, code: str = "", state: str = ""):
+def callback(
+    request: Request,
+    code: str = "",
+    state: str = "",
+    db: Session = Depends(get_db),
+):
     if get_settings().auth_disabled:
         return RedirectResponse(get_settings().azure_post_login_redirect)
     expected_state = request.session.pop("oauth_state", None)
@@ -32,12 +41,21 @@ def callback(request: Request, code: str = "", state: str = ""):
         raise HTTPException(400, "Missing code")
     result = azure_ad.exchange_code(code)
     claims = result.get("id_token_claims") or {}
-    request.session["user"] = azure_ad.user_from_claims(claims)
+    profile = azure_ad.user_from_claims(claims)
+    if not profile.get("email"):
+        raise HTTPException(400, "Azure AD response missing email/UPN")
+
+    user = _get_or_create_user(
+        db, email=profile["email"], name=profile["name"], azure_oid=profile["oid"]
+    )
+    if not user.is_active:
+        raise HTTPException(403, "User is disabled")
+    request.session["user"] = {"email": user.email}
     return RedirectResponse(get_settings().azure_post_login_redirect)
 
 
-@router.get("/me")
-def me(user: dict = Depends(current_user)):
+@router.get("/me", response_model=UserOut)
+def me(user: User = Depends(current_user)):
     return user
 
 

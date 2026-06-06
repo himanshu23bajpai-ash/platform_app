@@ -29,10 +29,14 @@ class Project(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now(), onupdate=func.now()
     )
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
     steps: Mapped[list["OnboardingStep"]] = relationship(  # noqa: F821
         "OnboardingStep",
         back_populates="project",
         cascade="all, delete-orphan",
         order_by="OnboardingStep.order_index",
+    )
+    assignments: Mapped[list["ProjectAssignment"]] = relationship(  # noqa: F821
+        "ProjectAssignment", back_populates="project", cascade="all, delete-orphan"
     )

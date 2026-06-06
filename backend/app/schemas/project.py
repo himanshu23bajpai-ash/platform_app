@@ -19,6 +19,17 @@ class ProjectCreate(BaseModel):
     compute_type: Literal["ecs", "eks", "lambda"] = "ecs"
 
 
+class ProjectUpdate(BaseModel):
+    description: str | None = None
+    owner_email: str | None = None
+    aws_account_id: str | None = None
+    aws_region: str | None = None
+    repo_url: str | None = None
+    repo_branch: str | None = None
+    language: str | None = None
+    compute_type: Literal["ecs", "eks", "lambda"] | None = None
+
+
 class ProjectOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -34,6 +45,7 @@ class ProjectOut(BaseModel):
     compute_type: str
     created_at: datetime
     updated_at: datetime
+    deleted_at: datetime | None = None
 
 
 class ProjectSummary(ProjectOut):
