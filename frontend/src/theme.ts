@@ -5,15 +5,15 @@ export const theme = createTheme({
   palette: {
     mode: "light",
     primary: {
-      main: purple[800],
-      light: purple[600],
-      dark: purple[900],
+      main: purple[500], // #8a00e5 brand color
+      light: purple[300],
+      dark: purple[700],
       contrastText: text.onPrimary,
     },
     secondary: {
-      main: purple[400],
-      light: purple[300],
-      dark: purple[600],
+      main: purple[300],
+      light: purple[200],
+      dark: purple[500],
       contrastText: text.onPrimary,
     },
     background: { default: surface.appBg, paper: surface.paper },

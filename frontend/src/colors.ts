@@ -6,18 +6,18 @@
  * should appear anywhere else in src/.
  */
 
-// --- Brand: purple scale ---
+// --- Brand: purple scale built around #8a00e5 (hsl 276 100 45) ---
 export const purple = {
-  50: "#faf5ff",
-  100: "#ede9fe",
-  200: "#ddd6fe",
-  300: "#c4b5fd",
-  400: "#a78bfa",
-  500: "#8b5cf6",
-  600: "#7c3aed",
-  700: "#6d28d9",
-  800: "#5b21b6",
-  900: "#4c1d95",
+  50: "#faf0ff",
+  100: "#f0d6ff",
+  200: "#e2b3ff",
+  300: "#cd80ff",
+  400: "#b333ff",
+  500: "#8a00e5", // base brand color
+  600: "#7400c2",
+  700: "#5c0099",
+  800: "#49007a",
+  900: "#37005c",
 } as const;
 
 // --- Neutrals (slate) ---
@@ -61,10 +61,10 @@ export const text = {
 
 // --- Chart series (Highcharts) ---
 export const chart = {
-  primary: purple[800],
-  secondary: purple[400],
-  accent: purple[600],
-  series: [purple[800], purple[400], purple[600], purple[300], purple[700], purple[500]],
+  primary: purple[500], // brand
+  secondary: purple[300],
+  accent: purple[700],
+  series: [purple[500], purple[300], purple[700], purple[400], purple[800], purple[200]],
   grid: surface.border,
   axisLabel: text.secondary,
   background: "transparent",
