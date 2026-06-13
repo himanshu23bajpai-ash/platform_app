@@ -5,11 +5,17 @@ import {
   Button,
   Chip,
   Container,
+  IconButton,
   Toolbar,
+  Tooltip,
   Typography,
 } from "@mui/material";
+import LogoutIcon from "@mui/icons-material/Logout";
 import { Link, NavLink, Outlet } from "react-router-dom";
+import { useMsal } from "@azure/msal-react";
 import { useMe } from "@/api/hooks";
+import { msalInstance, ssoEnabled } from "@/auth/msal";
+import { api } from "@/api/client";
 import type { Role } from "@/types";
 
 const ROLE_LABEL: Record<Role, string> = {
@@ -26,6 +32,16 @@ const ROLE_COLOR: Record<Role, "warning" | "secondary" | "default"> = {
 
 export function Layout() {
   const { data: user } = useMe();
+  useMsal(); // ensure MsalProvider is mounted; no per-render data needed
+
+  const signOut = async () => {
+    if (ssoEnabled) {
+      await msalInstance.logoutRedirect();
+      return;
+    }
+    await api.post("/auth/logout").catch(() => undefined);
+    window.location.replace("/login");
+  };
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
@@ -59,6 +75,11 @@ export function Layout() {
               <Avatar sx={{ width: 32, height: 32, bgcolor: "rgba(255,255,255,0.2)" }}>
                 {(user.name || user.email || "?").charAt(0).toUpperCase()}
               </Avatar>
+              <Tooltip title="Sign out">
+                <IconButton onClick={signOut} sx={{ color: "inherit" }} size="small">
+                  <LogoutIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
             </Box>
           ) : (
             <Typography variant="body2">Not signed in</Typography>

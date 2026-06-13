@@ -238,6 +238,53 @@ def test_secrets_lifecycle(client):
     assert client.get(f"/projects/{pid}/secrets/db_password").status_code == 404
 
 
+def test_bearer_token_rejected_when_auth_required(monkeypatch):
+    """With AUTH_DISABLED=false and Azure AD configured, an unsigned/garbage
+    Bearer token must be rejected with 401."""
+    import os
+    import tempfile
+
+    from fastapi.testclient import TestClient
+
+    tmp = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+    tmp.close()
+    monkeypatch.setenv("DATABASE_URL", f"sqlite:///{tmp.name}")
+    monkeypatch.setenv("AUTH_DISABLED", "false")
+    monkeypatch.setenv("AZURE_TENANT_ID", "fake-tenant")
+    monkeypatch.setenv("AZURE_CLIENT_ID", "fake-client")
+    monkeypatch.setenv("AWS_MODE", "mock")
+
+    from app import config
+    from app.services.aws import factory
+
+    config.get_settings.cache_clear()
+    factory.get_aws_provider.cache_clear()
+    factory.get_secrets_provider.cache_clear()
+    factory.get_cost_provider.cache_clear()
+
+    from app import db as db_module
+
+    new_engine = db_module.create_engine(
+        f"sqlite:///{tmp.name}", connect_args={"check_same_thread": False}, future=True
+    )
+    db_module.engine = new_engine
+    db_module.SessionLocal = db_module.sessionmaker(
+        bind=new_engine, autoflush=False, autocommit=False, future=True
+    )
+
+    from app.main import app
+
+    with TestClient(app) as c:
+        # No token → 401
+        assert c.get("/auth/me").status_code == 401
+        # Malformed token → 401 (validator rejects)
+        r = c.get("/auth/me", headers={"Authorization": "Bearer not-a-jwt"})
+        assert r.status_code == 401
+        assert "Invalid token" in r.json()["detail"]
+
+    os.unlink(tmp.name)
+
+
 def test_lifecycle_field(client):
     p = _make_project(client, name="alpha-lifecycle", lifecycle="IN_DEVELOPMENT")
     assert p["lifecycle"] == "IN_DEVELOPMENT"

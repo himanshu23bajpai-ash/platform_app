@@ -157,14 +157,46 @@ from Cost Explorer (must be enabled in your account).
 
 ### Real Azure AD
 
-1. Register an app in Azure AD with redirect URI
+There are two ways to wire Azure AD up, both supported simultaneously.
+
+**Option A — SPA-initiated SSO via MSAL.js (recommended).** The user signs
+in directly with Microsoft from the browser; the frontend acquires an ID
+token and sends it on every request; the backend validates the token
+against Azure AD's JWKS.
+
+1. Register an app in Azure AD with:
+   - Platform = **Single-page application**
+   - Redirect URI = `http://localhost:5173` (and your deployed URL)
+2. Backend env:
+   ```
+   AUTH_DISABLED=false
+   AZURE_TENANT_ID=<tenant-guid>
+   AZURE_CLIENT_ID=<spa-app-client-id>
+   ADMIN_EMAILS=you@example.com
+   ```
+   (No client secret needed for SPA-initiated auth.)
+3. Frontend env (`frontend/.env`):
+   ```
+   VITE_AZURE_TENANT_ID=<tenant-guid>
+   VITE_AZURE_CLIENT_ID=<spa-app-client-id>
+   VITE_AZURE_REDIRECT_URI=http://localhost:5173    # optional; defaults to origin
+   ```
+4. Restart both. The login page now uses MSAL.js: clicking
+   *Sign in with Microsoft* redirects to `login.microsoftonline.com`,
+   returns with an ID token, and the SPA sends it as
+   `Authorization: Bearer <id_token>` on every API call.
+
+**Option B — Server-side authorization-code flow (cookie session).** Use
+this if the SPA can't talk to Azure AD directly (locked-down network) or
+you want server-issued cookies.
+
+1. Register an app with platform = **Web** and redirect URI
    `http://localhost:8000/auth/callback`
 2. Generate a client secret
-3. Set `AUTH_DISABLED=false` and the `AZURE_TENANT_ID`,
-   `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET` env vars
-4. Add your email to `ADMIN_EMAILS` so your first login auto-promotes
-   you to admin
-5. Restart the backend
+3. Backend env: `AUTH_DISABLED=false`, `AZURE_TENANT_ID`,
+   `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`
+4. Leave the frontend `VITE_AZURE_CLIENT_ID` blank. The login page falls
+   back to a link that hits the backend's `/auth/login` endpoint.
 
 ## Tests
 

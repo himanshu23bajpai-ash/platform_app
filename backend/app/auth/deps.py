@@ -1,6 +1,7 @@
-from fastapi import Depends, HTTPException, Request, status
+from fastapi import Depends, Header, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
+from app.auth.jwt_validator import TokenError, validate_id_token
 from app.config import get_settings
 from app.db import get_db
 from app.models.project_assignment import ProjectAssignment
@@ -38,19 +39,48 @@ def _get_or_create_user(db: Session, *, email: str, name: str, azure_oid: str = 
     return user
 
 
-def current_user(request: Request, db: Session = Depends(get_db)) -> User:
+def _claims_to_profile(claims: dict) -> dict:
+    return {
+        "email": (claims.get("preferred_username") or claims.get("email") or "").strip(),
+        "name": claims.get("name") or "",
+        "oid": claims.get("oid") or "",
+    }
+
+
+def current_user(
+    request: Request,
+    authorization: str | None = Header(default=None),
+    db: Session = Depends(get_db),
+) -> User:
     settings = get_settings()
     if settings.auth_disabled:
         return _get_or_create_user(
             db, email=settings.dev_user_email, name=settings.dev_user_name
         )
 
+    # 1. Bearer token from the SPA (MSAL.js)
+    if authorization and authorization.lower().startswith("bearer "):
+        token = authorization.split(" ", 1)[1].strip()
+        try:
+            claims = validate_id_token(token)
+        except TokenError as e:
+            raise HTTPException(status.HTTP_401_UNAUTHORIZED, f"Invalid token: {e}") from e
+        profile = _claims_to_profile(claims)
+        if not profile["email"]:
+            raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Token missing email/UPN")
+        user = _get_or_create_user(
+            db, email=profile["email"], name=profile["name"], azure_oid=profile["oid"]
+        )
+        if not user.is_active:
+            raise HTTPException(status.HTTP_403_FORBIDDEN, "User is disabled")
+        return user
+
+    # 2. Server-side OAuth code flow (cookie session)
     session_user = request.session.get("user")
     if not session_user:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Not authenticated")
     user = db.query(User).filter(User.email == session_user["email"]).first()
     if not user:
-        # Session points at a missing user (deleted) — clear & 401.
         request.session.clear()
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "User not found")
     if not user.is_active:
